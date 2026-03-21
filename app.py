@@ -8,6 +8,22 @@ app = Flask(__name__)
 def home():
     return jsonify({"status": "✅ Hindi TTS API Running! (Google TTS)"})
 
+@app.route('/generate', methods=['POST'])
+def generate():
+    try:
+        data = request.json or {}
+        text = data.get('text', '').strip()
+        lang = data.get('lang', 'hi')
+        if not text:
+            return jsonify({"error": "Text empty hai!"}), 400
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
+        tmp.close()
+        gTTS(text=text, lang=lang, slow=False).save(tmp.name)
+        return send_file(tmp.name, mimetype='audio/mpeg',
+                        as_attachment=True, download_name='audio.mp3')
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/generate-base64', methods=['POST'])
 def generate_base64():
     try:
